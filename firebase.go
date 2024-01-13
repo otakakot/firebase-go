@@ -44,43 +44,7 @@ func (fb *Firebase) SignUpWithEmailPassword(
 ) (*SignUpWithEmailPasswordResponse, error) {
 	url := fmt.Sprintf("%s/v1/accounts:signUp?key=%s", fb.endpoint, fb.apikey)
 
-	body := new(bytes.Buffer)
-
-	if err := json.NewEncoder(body).Encode(req); err != nil {
-		return nil, err
-	}
-
-	request, err := http.NewRequest(http.MethodPost, url, body)
-	if err != nil {
-		return nil, err
-	}
-
-	request.Header.Set("Content-Type", "application/json")
-
-	res, err := http.DefaultClient.Do(request.WithContext(ctx))
-	if err != nil {
-		return nil, err
-	}
-
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		var er ErrorResponse
-
-		if err := json.NewDecoder(res.Body).Decode(&er); err != nil {
-			return nil, err
-		}
-
-		return nil, &er
-	}
-
-	var response SignUpWithEmailPasswordResponse
-
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return post[SignUpWithEmailPasswordRequest, SignUpWithEmailPasswordResponse](ctx, url, req)
 }
 
 // SignInWithEmailPassword.
@@ -91,6 +55,14 @@ func (fb *Firebase) SignInWithEmailPassword(
 ) (*SignInWithEmailPasswordResponse, error) {
 	url := fmt.Sprintf("%s/v1/accounts:signInWithPassword?key=%s", fb.endpoint, fb.apikey)
 
+	return post[SignInWithEmailPasswordRequest, SignInWithEmailPasswordResponse](ctx, url, req)
+}
+
+func post[Req any, Res any](
+	ctx context.Context,
+	url string,
+	req Req,
+) (*Res, error) {
 	body := new(bytes.Buffer)
 
 	if err := json.NewEncoder(body).Encode(req); err != nil {
@@ -121,7 +93,7 @@ func (fb *Firebase) SignInWithEmailPassword(
 		return nil, &er
 	}
 
-	var response SignInWithEmailPasswordResponse
+	var response Res
 
 	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
 		return nil, err
