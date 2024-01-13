@@ -26,6 +26,7 @@ var (
 )
 
 // errorResponse is the response body for the SignInWithEmailPassword method when an error occurs.
+// ref: https://firebase.google.com/docs/reference/rest/auth#section-error-response
 type errorResponse struct {
 	Err struct {
 		Code    int    `json:"code"`
