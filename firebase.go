@@ -36,8 +36,55 @@ func New(apikey string, options ...Options) *Firebase {
 	return fb
 }
 
+// SignUpWithEmailPassword.
+// ref: https://firebase.google.com/docs/reference/rest/auth#section-create-email-password
+func (fb *Firebase) SignUpWithEmailPassword(
+	ctx context.Context,
+	req SignUpWithEmailPasswordRequest,
+) (*SignUpWithEmailPasswordResponse, error) {
+	url := fmt.Sprintf("%s/v1/accounts:signUp?key=%s", fb.endpoint, fb.apikey)
+
+	body := new(bytes.Buffer)
+
+	if err := json.NewEncoder(body).Encode(req); err != nil {
+		return nil, err
+	}
+
+	request, err := http.NewRequest(http.MethodPost, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(request.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		var er ErrorResponse
+
+		if err := json.NewDecoder(res.Body).Decode(&er); err != nil {
+			return nil, err
+		}
+
+		return nil, &er
+	}
+
+	var response SignUpWithEmailPasswordResponse
+
+	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // SignInWithEmailPassword.
-// https://firebase.google.com/docs/reference/rest/auth#section-sign-in-email-password
+// ref: https://firebase.google.com/docs/reference/rest/auth#section-sign-in-email-password
 func (fb *Firebase) SignInWithEmailPassword(
 	ctx context.Context,
 	req SignInWithEmailPasswordRequest,
@@ -65,13 +112,13 @@ func (fb *Firebase) SignInWithEmailPassword(
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		var er errorResponse
+		var er ErrorResponse
 
 		if err := json.NewDecoder(res.Body).Decode(&er); err != nil {
 			return nil, err
 		}
 
-		return nil, er
+		return nil, &er
 	}
 
 	var response SignInWithEmailPasswordResponse
